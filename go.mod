@@ -1,4 +1,4 @@
-module goal-tracker
+module github.com/srad1292/goal_tracker
 
 go 1.15
 

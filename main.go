@@ -1,11 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/srad1292/goal_tracker/pkg/goal"
+	"github.com/srad1292/goal_tracker/pkg/progress"
 )
 
 // Middleware
@@ -60,48 +61,6 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 
 // End Progress Routes
 
-// Start Goals Routes
-
-type goal struct {
-	Goal     int    `json:"goal"`
-	GoalName string `json:"goalName"`
-	Unit     string `json:"unit"`
-}
-
-type goalsResponse struct {
-	Goals []goal `json:"goals"`
-}
-
-func getGoals(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	var resp = goalsResponse{
-		Goals: []goal{
-			{
-				Goal:     1,
-				GoalName: "Push Ups",
-				Unit:     "",
-			},
-			{
-				Goal:     2,
-				GoalName: "Drawing",
-				Unit:     "Minutes",
-			},
-		},
-	}
-
-	js, err := json.Marshal(resp)
-	if err == nil {
-		w.WriteHeader(http.StatusOK)
-		w.Write(js)
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"message": "This is where I would return an error"}`))
-	}
-}
-
-// End Goals Routes
-
 func main() {
 	router := mux.NewRouter()
 	router.Use(logRequest)
@@ -109,16 +68,8 @@ func main() {
 	router.HandleFunc("/", base).Methods(http.MethodGet)
 	router.HandleFunc("/", notFound)
 
-	progress := router.PathPrefix("/progress").Subrouter()
-	progress.HandleFunc("", get).Methods(http.MethodGet)
-	progress.HandleFunc("", post).Methods(http.MethodPost)
-	progress.HandleFunc("", put).Methods(http.MethodPut)
-	progress.HandleFunc("", delete).Methods(http.MethodDelete)
-	progress.HandleFunc("", notFound)
-
-	goal := router.PathPrefix("/goal").Subrouter()
-	goal.HandleFunc("", getGoals).Methods(http.MethodGet)
-	goal.HandleFunc("", notFound)
+	goal.GoalRouteHandler(router)
+	progress.ProgressRouteHandler(router)
 
 	log.Println("Starting server at localhost:8080")
 	log.Fatal(http.ListenAndServe("localhost:8080", router))
