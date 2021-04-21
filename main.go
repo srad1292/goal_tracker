@@ -3,8 +3,12 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+
+	"github.com/srad1292/goal_tracker/pkg/database"
 	"github.com/srad1292/goal_tracker/pkg/goal"
 	"github.com/srad1292/goal_tracker/pkg/progress"
 )
@@ -62,6 +66,11 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 // End Progress Routes
 
 func main() {
+	readEnvironment()
+	validateEnvironment()
+
+	database.ConnectToDatabase()
+
 	router := mux.NewRouter()
 	router.Use(logRequest)
 
@@ -73,4 +82,38 @@ func main() {
 
 	log.Println("Starting server at localhost:8080")
 	log.Fatal(http.ListenAndServe("localhost:8080", router))
+}
+
+func readEnvironment() {
+	error := godotenv.Load(".env")
+
+	if error != nil {
+		log.Println(error)
+		log.Fatalf("Failed to load .env file")
+	}
+
+}
+
+func validateEnvironment() {
+	missing := make([]string, 0)
+
+	port := os.Getenv("DB_PORT")
+	schema := os.Getenv("DB_SCHEMA")
+
+	if port == "" {
+		missing = append(missing, "DB_PORT")
+	}
+
+	if schema == "" {
+		missing = append(missing, "DB_SCHEMA")
+	}
+
+	if len(missing) > 0 {
+		log.Println("MISSING ENVIRONMENT VARIABLES:")
+		for _, value := range missing {
+			log.Printf("%s, ", value)
+		}
+		log.Println()
+	}
+
 }
