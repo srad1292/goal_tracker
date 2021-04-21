@@ -69,7 +69,7 @@ func main() {
 	readEnvironment()
 	validateEnvironment()
 
-	database.ConnectToDatabase()
+	database.GetDatabase()
 
 	router := mux.NewRouter()
 	router.Use(logRequest)
@@ -97,15 +97,40 @@ func readEnvironment() {
 func validateEnvironment() {
 	missing := make([]string, 0)
 
-	port := os.Getenv("DB_PORT")
-	schema := os.Getenv("DB_SCHEMA")
+	db_user := os.Getenv("DB_USER")
+	db_password := os.Getenv("DB_PASSWORD")
+	db_host := os.Getenv("DB_HOST")
+	db_port := os.Getenv("DB_PORT")
+	db_name := os.Getenv("DB_NAME")
+	db_schema := os.Getenv("DB_SCHEMA")
+	db_conn := os.Getenv("DB_MAX_CONNECTIONS")
 
-	if port == "" {
+	if db_user == "" {
+		missing = append(missing, "DB_USER")
+	}
+
+	if db_password == "" {
+		missing = append(missing, "DB_PASSWORD")
+	}
+
+	if db_host == "" {
+		missing = append(missing, "DB_HOST")
+	}
+
+	if db_port == "" {
 		missing = append(missing, "DB_PORT")
 	}
 
-	if schema == "" {
+	if db_name == "" {
+		missing = append(missing, "DB_NAME")
+	}
+
+	if db_schema == "" {
 		missing = append(missing, "DB_SCHEMA")
+	}
+
+	if db_conn == "" {
+		missing = append(missing, "DB_MAX_CONNECTIONS")
 	}
 
 	if len(missing) > 0 {
