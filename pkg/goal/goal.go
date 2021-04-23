@@ -2,6 +2,7 @@ package goal
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,6 +14,7 @@ type Goal struct {
 	Goal     int    `json:"goal"`
 	GoalName string `json:"goalName"`
 	Unit     string `json:"unit"`
+	Active   bool   `json:"active"`
 }
 
 type GoalsResponse struct {
@@ -28,7 +30,13 @@ func GoalRouteHandler(router *mux.Router) {
 func getGoals(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var resp = GetGoalsFromPersistence()
+	var resp, goalError = GetGoalsFromPersistence()
+	if goalError != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		errorResponse := fmt.Sprintf(`{"error": "%s"}`, goalError.Error())
+		w.Write([]byte(errorResponse))
+		return
+	}
 
 	js, err := json.Marshal(resp)
 	if err == nil {
@@ -36,7 +44,8 @@ func getGoals(w http.ResponseWriter, r *http.Request) {
 		w.Write(js)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"message": "This is where I would return an error"}`))
+		errorResponse := fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		w.Write([]byte(errorResponse))
 	}
 }
 
@@ -44,7 +53,7 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "OPTIONS" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"message": "not found"}`))
+		w.Write([]byte(`{"error": "Method not found."}`))
 	}
 }
 

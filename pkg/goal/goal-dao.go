@@ -8,46 +8,50 @@ import (
 	"github.com/srad1292/goal_tracker/pkg/database"
 )
 
-func GetGoalsFromPersistence() GoalsResponse {
+func GetGoalsFromPersistence() (GoalsResponse, error) {
 	db := database.GetDatabase()
 
-	goals, error := db.Query(context.Background(), "select * from goal where active=true")
+	var query string = `
+		select * 
+		from goal 
+		where active=true
+		order by goal_name
+	`
+	dbGoals, err := db.Query(context.Background(), query)
 
-	if error != nil {
-		log.Printf("Error getting goals: %v", error)
+	if err != nil {
+		log.Printf("Error getting goals: %v", err)
 		return GoalsResponse{
 			Goals: []Goal{},
-		}
+		}, err
 	}
 
-	// goals.
-	for goals.Next() {
+	goals := make([]Goal, 0)
+	for dbGoals.Next() {
 		var goal int
 		var goal_name string
 		var unit string
 		var active bool
 
-		error = goals.Scan(&goal, &goal_name, &unit, &active)
-		if error != nil {
+		err = dbGoals.Scan(&goal, &goal_name, &unit, &active)
+		if err != nil {
 			// handle this error
-			log.Printf("Error reading goals records: %v", error)
+			log.Printf("Error reading goals records: %v", err)
+			return GoalsResponse{
+				Goals: []Goal{},
+			}, err
 		} else {
-			fmt.Printf("Goal: %d, Name: %s, Unit: %s", goal, goal_name, unit)
+			fmt.Printf("Goal: %d, Name: %s, Unit: %s\n", goal, goal_name, unit)
+			goals = append(goals, Goal{
+				Goal:     goal,
+				GoalName: goal_name,
+				Unit:     unit,
+				Active:   active,
+			})
 		}
 	}
 
 	return GoalsResponse{
-		Goals: []Goal{
-			{
-				Goal:     1,
-				GoalName: "Push Ups",
-				Unit:     "",
-			},
-			{
-				Goal:     3,
-				GoalName: "Drawing",
-				Unit:     "Minutes",
-			},
-		},
-	}
+		Goals: goals,
+	}, nil
 }
