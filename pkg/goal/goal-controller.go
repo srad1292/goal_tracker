@@ -20,7 +20,10 @@ func GoalRouteHandler(router *mux.Router) {
 func getGoals(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var resp, goalError = GetGoalsFromPersistence()
+	query := r.URL.Query()
+	onlyActive := query.Get("onlyActive") == "true"
+
+	var resp, goalError = GetGoalsFromPersistence(onlyActive)
 	if goalError != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		errorResponse := fmt.Sprintf(`{"error": "%s"}`, goalError.Error())

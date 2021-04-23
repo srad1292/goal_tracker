@@ -8,15 +8,25 @@ import (
 	"github.com/srad1292/goal_tracker/pkg/database"
 )
 
-func GetGoalsFromPersistence() (GoalsResponse, error) {
+func GetGoalsFromPersistence(onlyActive bool) (GoalsResponse, error) {
 	db := database.GetDatabase()
 
-	var query string = `
-		select * 
-		from dev_goal 
-		where active=true
-		order by goal_name;
-	`
+	var query string
+	if onlyActive {
+		query = `
+			select * 
+			from dev_goal 
+			where active=true
+			order by goal_name;
+		`
+	} else {
+		query = `
+			select * 
+			from dev_goal 
+			order by goal_name;
+		`
+	}
+
 	dbGoals, err := db.Query(context.Background(), query)
 
 	if err != nil {
