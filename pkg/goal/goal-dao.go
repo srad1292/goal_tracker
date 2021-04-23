@@ -15,14 +15,14 @@ func GetGoalsFromPersistence(onlyActive bool) (GoalsResponse, error) {
 	if onlyActive {
 		query = `
 			select * 
-			from dev_goal 
+			from goal 
 			where active=true
 			order by goal_name;
 		`
 	} else {
 		query = `
 			select * 
-			from dev_goal 
+			from goal 
 			order by goal_name;
 		`
 	}
@@ -69,7 +69,7 @@ func AddGoalToPersistence(newGoal Goal) (Goal, error) {
 	db := database.GetDatabase()
 
 	var query string = `
-		insert into dev_goal (goal_name, unit, active) 
+		insert into goal (goal_name, unit, active) 
 		values
 		($1, $2, $3)
 		returning goal;
@@ -94,4 +94,24 @@ func AddGoalToPersistence(newGoal Goal) (Goal, error) {
 	}
 
 	return newGoal, nil
+}
+
+func UpdateGoalInPersistence(goal Goal, goalId int) (Goal, error) {
+	db := database.GetDatabase()
+
+	var query string = `
+		update goal 
+		set goal_name = $1,
+		unit = $2,
+		active = $3
+		where goal = $4;
+	`
+	_, err := db.Query(context.Background(), query, goal.GoalName, goal.Unit, goal.Active, goalId)
+
+	if err != nil {
+		log.Printf("Error updating goal: %v", err)
+		return goal, err
+	}
+
+	return goal, nil
 }
