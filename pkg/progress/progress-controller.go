@@ -2,36 +2,43 @@ package progress
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
 // Start Progress Routes
 
-type ProgressPersistence struct {
-	Progress    int    `json:"progress"`
-	Amount      int    `json:"amount"`
-	SessionDate string `json:"sessionDate"`
-	Goal        int    `json:"goal"`
-	GoalName    string `json:"goalName"`
-	Unit        string `json:"unit"`
-}
-
-type ProgressResponse struct {
-	Progress []ProgressPersistence `json:"progress"`
-}
-
 func ProgressRouteHandler(router *mux.Router) {
 	progress := router.PathPrefix("/progress").Subrouter()
-	progress.HandleFunc("", getProgress).Methods(http.MethodGet)
+	progress.HandleFunc("/goal/{goalId:[0-9]+}", getProgress).Methods(http.MethodGet)
 	progress.HandleFunc("", notFound)
 }
 
 func getProgress(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var resp = GetProgressFromPersistence()
+	vars := mux.Vars(r)
+	goalId, queryErr := strconv.Atoi(vars["goalId"])
+
+	if queryErr != nil {
+		w.WriteHeader(http.StatusNotFound)
+		errorResponse := fmt.Sprintf(`{"error": "Method Not Found"}`)
+		w.Write([]byte(errorResponse))
+	}
+
+	query := r.URL.Query()
+	year, yearErr := strconv.Atoi(query.Get("year"))
+
+	if yearErr != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		errorResponse := fmt.Sprintf(`{"error": "Query parameter, year, should be a number`)
+		w.Write([]byte(errorResponse))
+	}
+
+	var resp, err = GetProgressFromPersistence(goalId, year)
 
 	js, err := json.Marshal(resp)
 	if err == nil {
@@ -39,7 +46,8 @@ func getProgress(w http.ResponseWriter, r *http.Request) {
 		w.Write(js)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"message": "This is where I would return an error"}`))
+		errorResponse := fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		w.Write([]byte(errorResponse))
 	}
 }
 
