@@ -56,6 +56,7 @@ func createGoal(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		errorResponse := fmt.Sprintf(`{"error": "%s"}`, bodyErr.Error())
 		w.Write([]byte(errorResponse))
+		return
 	}
 
 	var resp, goalError = AddGoalToPersistence(newGoal)
@@ -87,6 +88,7 @@ func updateGoal(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		errorResponse := fmt.Sprintf(`{"error": "Method Not Found"}`)
 		w.Write([]byte(errorResponse))
+		return
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -98,6 +100,7 @@ func updateGoal(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		errorResponse := fmt.Sprintf(`{"error": "%s"}`, bodyErr.Error())
 		w.Write([]byte(errorResponse))
+		return
 	}
 
 	var resp, goalError = UpdateGoalInPersistence(updatedGoal, goalId)
