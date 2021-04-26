@@ -9,6 +9,77 @@ import (
 	"github.com/srad1292/goal_tracker/pkg/database"
 )
 
+func AddProgressToPersistence(newProgress Progress) (Progress, error) {
+	db := database.GetDatabase()
+
+	var query string = `
+		insert into progress (amount, session_date, goal) 
+		values
+		($1, $2, $3)
+		returning progress;
+	`
+	dbProgressId, err := db.Query(context.Background(), query, newProgress.Amount, newProgress.SessionDate, newProgress.Goal)
+
+	if err != nil {
+		log.Printf("Error creating progress: %v", err)
+		return newProgress, err
+	}
+
+	var progress int = 0
+
+	for dbProgressId.Next() {
+		err = dbProgressId.Scan(&progress)
+		if err != nil {
+			log.Printf("Error scanning new progress records: %v", err)
+			return newProgress, err
+		} else {
+			newProgress.Progress = progress
+		}
+	}
+
+	return newProgress, nil
+}
+
+func UpdateProgressInPersistence(progress Progress, progressId int) (Progress, error) {
+	db := database.GetDatabase()
+
+	var query string = `
+		update progress 
+		set amount = $1,
+		session_date = $2,
+		goal = $3
+		where progress = $4;
+	`
+	_, err := db.Query(context.Background(), query, progress.Amount, progress.SessionDate, progress.Goal, progressId)
+
+	if err != nil {
+		log.Printf("Error updating progress: %v", err)
+		return progress, err
+	}
+
+	progress.Progress = progressId
+
+	return progress, nil
+}
+
+func DeleteProgressFromPersistence(progressId int) error {
+	db := database.GetDatabase()
+
+	var query string = `
+		delete
+		from progress
+		where progress = $1;
+	`
+	_, err := db.Query(context.Background(), query, progressId)
+
+	if err != nil {
+		log.Printf("Error deleting progress: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 func GetProgressFromPersistence(goalId int, year int) (ProgressResponse, error) {
 	db := database.GetDatabase()
 
