@@ -113,5 +113,7 @@ func UpdateGoalInPersistence(goal Goal, goalId int) (Goal, error) {
 		return goal, err
 	}
 
+	goal.Goal = goalId
+
 	return goal, nil
 }
