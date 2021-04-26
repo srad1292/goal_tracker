@@ -29,6 +29,7 @@ func getProgress(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		errorResponse := fmt.Sprintf(`{"error": "Method Not Found"}`)
 		w.Write([]byte(errorResponse))
+		return
 	}
 
 	query := r.URL.Query()
@@ -38,6 +39,7 @@ func getProgress(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		errorResponse := fmt.Sprintf(`{"error": "Query parameter, year, should be a number`)
 		w.Write([]byte(errorResponse))
+		return
 	}
 
 	var resp, err = GetProgressFromPersistence(goalId, year)
@@ -125,6 +127,7 @@ func getBestSessions(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		errorResponse := fmt.Sprintf(`{"error": "Method Not Found"}`)
 		w.Write([]byte(errorResponse))
+		return
 	}
 
 	query := r.URL.Query()
@@ -134,6 +137,7 @@ func getBestSessions(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		errorResponse := fmt.Sprintf(`{"error": "Query parameter, year, should be a number`)
 		w.Write([]byte(errorResponse))
+		return
 	}
 
 	useLow := query.Get("useLow") == "true"
